@@ -5,11 +5,13 @@ let running = true;
 let generation = 1;
 let sketchHost;
 let controls;
+let driftSeed = 0;
 
 const MAX_CREATURES = 260;
 const MAX_FOOD = 620;
 const START_CREATURES = 42;
 const START_FOOD = 210;
+const LINEAGE_HUES = [18, 42, 178, 205, 287, 326];
 
 function setup() {
   sketchHost = document.getElementById("sketch");
@@ -22,8 +24,8 @@ function setup() {
 }
 
 function draw() {
-  background(156, 16, 8);
-  drawFoodGlow();
+  drawBackdrop();
+  drawFlowField();
 
   if (running) {
     for (let step = 0; step < Number(controls.simSpeed.value); step++) {
@@ -31,9 +33,12 @@ function draw() {
     }
   }
 
+  drawCreatureTrails();
+  drawFoodGlow();
   drawFood();
   drawCreatures();
   drawTrails();
+  drawVignette();
   updateStats();
 }
 
@@ -72,6 +77,7 @@ function resetWorld() {
   creatures = [];
   food = [];
   history = [];
+  driftSeed = random(1000);
 
   for (let i = 0; i < START_CREATURES; i++) {
     creatures.push(new Creature(random(width), random(height)));
@@ -128,23 +134,76 @@ function growFood() {
   }
 }
 
+function drawBackdrop() {
+  background(205, 18, 7);
+
+  noStroke();
+  for (let y = 0; y < height; y += 3) {
+    const shade = map(y, 0, height, 9, 4);
+    fill(185 + noise(y * 0.004, frameCount * 0.001) * 30, 16, shade, 48);
+    rect(0, y, width, 3);
+  }
+}
+
+function drawFlowField() {
+  blendMode(ADD);
+  noFill();
+  strokeWeight(1);
+
+  const spacing = 58;
+  for (let y = -spacing; y < height + spacing; y += spacing) {
+    for (let x = -spacing; x < width + spacing; x += spacing) {
+      const n = noise(x * 0.003, y * 0.003, driftSeed + frameCount * 0.001);
+      const angle = n * TWO_PI * 2.2;
+      const len = 28 + n * 42;
+      stroke(42, 30, 72, 4.5);
+      beginShape();
+      for (let i = 0; i < 5; i++) {
+        const t = i / 4;
+        const bend = sin(t * PI + frameCount * 0.01 + n * 8) * 10;
+        vertex(
+          x + cos(angle) * len * t + cos(angle + HALF_PI) * bend,
+          y + sin(angle) * len * t + sin(angle + HALF_PI) * bend
+        );
+      }
+      endShape();
+    }
+  }
+
+  blendMode(BLEND);
+}
+
 function drawFoodGlow() {
+  blendMode(ADD);
   noStroke();
   for (const pellet of food) {
-    fill(116, 70, 42, 5);
-    circle(pellet.pos.x, pellet.pos.y, pellet.energy * 5);
+    fill(106, 46, 40, 4.2);
+    circle(pellet.pos.x, pellet.pos.y, pellet.energy * 6.5);
   }
+  blendMode(BLEND);
 }
 
 function drawFood() {
   noStroke();
   for (const pellet of food) {
-    fill(118, 64, 82, 82);
-    circle(pellet.pos.x, pellet.pos.y, pellet.energy * 1.35);
+    fill(104, 44, 86, 78);
+    circle(pellet.pos.x, pellet.pos.y, pellet.energy * 1.15);
+    fill(52, 38, 98, 42);
+    circle(pellet.pos.x - pellet.energy * 0.14, pellet.pos.y - pellet.energy * 0.16, pellet.energy * 0.34);
   }
 }
 
+function drawCreatureTrails() {
+  blendMode(ADD);
+  noFill();
+  for (const creature of creatures) {
+    creature.drawTrail();
+  }
+  blendMode(BLEND);
+}
+
 function drawCreatures() {
+  blendMode(BLEND);
   for (const creature of creatures) {
     creature.draw();
   }
@@ -171,6 +230,15 @@ function drawTrails() {
   endShape();
 }
 
+function drawVignette() {
+  noFill();
+  strokeWeight(24);
+  for (let i = 0; i < 5; i++) {
+    stroke(205, 18, 2, 8);
+    rect(i * 10, i * 10, width - i * 20, height - i * 20);
+  }
+}
+
 function updateStats() {
   const avgLength = creatures.length
     ? creatures.reduce((sum, creature) => sum + creature.bodyLength(), 0) / creatures.length
@@ -194,6 +262,7 @@ class Creature {
     this.pos = createVector(x, y);
     this.vel = p5.Vector.random2D().mult(random(0.4, 1.5));
     this.acc = createVector(0, 0);
+    this.trail = [];
     this.age = 0;
     this.generation = generationNumber;
 
@@ -208,7 +277,7 @@ class Creature {
       eyeGap: random(0.22, 0.72),
       sensorWidth: random(0.09, 0.36),
       markings: random(0.1, 1),
-      hue: random([15, 42, 196, 286]) + random(-14, 14),
+      hue: random(LINEAGE_HUES) + random(-12, 12),
       efficiency: random(0.72, 1.2),
       turn: random(0.035, 0.13)
     };
@@ -235,9 +304,11 @@ class Creature {
       this.acc.add(p5.Vector.random2D().mult(0.045));
     }
 
+    this.acc.add(flowAt(this.pos.x, this.pos.y).mult(0.055 + this.genes.sensorWidth * 0.15));
     this.separate();
     this.vel.add(this.acc).limit(this.genes.speed);
     this.pos.add(this.vel);
+    this.recordTrail();
     this.acc.mult(0);
     this.wrap();
   }
@@ -301,6 +372,27 @@ class Creature {
     );
   }
 
+  recordTrail() {
+    const last = this.trail[this.trail.length - 1];
+    if (!last || dist(last.x, last.y, this.pos.x, this.pos.y) > 3) {
+      this.trail.push({ x: this.pos.x, y: this.pos.y });
+      if (this.trail.length > 18) this.trail.shift();
+    }
+  }
+
+  drawTrail() {
+    if (this.trail.length < 3) return;
+
+    const bodyHue = wrapValue(this.genes.hue, 360);
+    stroke(bodyHue, 48, 76, 3 + this.genes.markings * 7);
+    strokeWeight(max(1, this.bodyWidth() * 0.18));
+    drawTrailShape(this.trail);
+
+    stroke(wrapValue(bodyHue + 34, 360), 34, 94, 3.5);
+    strokeWeight(max(0.5, this.bodyWidth() * 0.055));
+    drawTrailShape(this.trail);
+  }
+
   draw() {
     const angle = this.vel.heading();
     const energyAlpha = map(this.energy, 0, 140, 38, 96, true);
@@ -308,7 +400,7 @@ class Creature {
     const length = this.bodyLength();
     const bodyWidth = this.bodyWidth();
     const headSize = bodyWidth * this.genes.head;
-    const tailLength = this.genes.size * this.genes.tail;
+    const tailLength = this.genes.size * this.genes.tail * 1.45;
     const eyeSize = max(1.9, bodyWidth * 0.16);
     const eyeY = bodyWidth * this.genes.eyeGap * 0.5;
 
@@ -316,41 +408,71 @@ class Creature {
     translate(this.pos.x, this.pos.y);
     rotate(angle);
     noStroke();
-    fill(bodyHue, 68, 94, 18);
-    arc(0, 0, this.genes.sense * 0.58, this.genes.sense * this.genes.sensorWidth, -0.58, 0.58);
+    fill(bodyHue, 46, 92, 8);
+    arc(0, 0, this.genes.sense * 0.7, this.genes.sense * this.genes.sensorWidth, -0.62, 0.62);
+
+    stroke(bodyHue, 42, 88, 18);
+    strokeWeight(max(0.8, bodyWidth * 0.045));
+    noFill();
+    bezier(
+      -length * 0.18,
+      -bodyWidth * 0.1,
+      length * 0.08,
+      -bodyWidth * 0.95,
+      length * 0.54,
+      -bodyWidth * 0.42,
+      length * 0.75,
+      -bodyWidth * this.genes.eyeGap
+    );
+    bezier(
+      -length * 0.18,
+      bodyWidth * 0.1,
+      length * 0.08,
+      bodyWidth * 0.95,
+      length * 0.54,
+      bodyWidth * 0.42,
+      length * 0.75,
+      bodyWidth * this.genes.eyeGap
+    );
+    noStroke();
 
     fill(bodyHue, 70, 62, energyAlpha * 0.58);
-    triangle(
-      -length * 0.48,
-      0,
-      -length * 0.5 - tailLength,
-      -bodyWidth * 0.34,
-      -length * 0.5 - tailLength,
-      bodyWidth * 0.34
-    );
+    beginShape();
+    vertex(-length * 0.45, 0);
+    bezierVertex(-length * 0.56, -bodyWidth * 0.52, -length * 0.5 - tailLength, -bodyWidth * 0.36, -length * 0.54 - tailLength, 0);
+    bezierVertex(-length * 0.5 - tailLength, bodyWidth * 0.36, -length * 0.56, bodyWidth * 0.52, -length * 0.45, 0);
+    endShape(CLOSE);
 
     fill(bodyHue, 74, 96, energyAlpha);
-    ellipse(-length * 0.06, 0, length, bodyWidth);
+    beginShape();
+    vertex(-length * 0.5, 0);
+    bezierVertex(-length * 0.38, -bodyWidth * 0.72, length * 0.04, -bodyWidth * 0.7, length * 0.45, -bodyWidth * 0.08);
+    bezierVertex(length * 0.58, bodyWidth * 0.08, length * 0.06, bodyWidth * 0.72, -length * 0.5, 0);
+    endShape(CLOSE);
 
-    fill(wrapValue(bodyHue + 18, 360), 62, 100, energyAlpha);
+    fill(wrapValue(bodyHue + 22, 360), 56, 100, energyAlpha * 0.88);
     ellipse(length * 0.38, 0, headSize, bodyWidth * 0.9);
 
     if (this.genes.markings > 0.28) {
-      fill(wrapValue(bodyHue + 150, 360), 54, 96, 32 + this.genes.markings * 34);
-      ellipse(-length * 0.2, 0, length * 0.18, bodyWidth * 0.7);
+      fill(wrapValue(bodyHue + 142, 360), 38, 98, 22 + this.genes.markings * 26);
+      ellipse(-length * 0.18, 0, length * (0.11 + this.genes.markings * 0.08), bodyWidth * 0.62);
     }
 
     if (this.genes.markings > 0.62) {
-      stroke(wrapValue(bodyHue + 210, 360), 46, 100, 46);
-      strokeWeight(max(1, bodyWidth * 0.07));
-      line(-length * 0.42, -bodyWidth * 0.12, length * 0.2, -bodyWidth * 0.22);
-      line(-length * 0.42, bodyWidth * 0.12, length * 0.2, bodyWidth * 0.22);
+      stroke(wrapValue(bodyHue + 214, 360), 34, 100, 38);
+      strokeWeight(max(1, bodyWidth * 0.055));
+      noFill();
+      bezier(-length * 0.42, -bodyWidth * 0.1, -length * 0.1, -bodyWidth * 0.36, length * 0.12, -bodyWidth * 0.18, length * 0.28, -bodyWidth * 0.28);
+      bezier(-length * 0.42, bodyWidth * 0.1, -length * 0.1, bodyWidth * 0.36, length * 0.12, bodyWidth * 0.18, length * 0.28, bodyWidth * 0.28);
       noStroke();
     }
 
-    fill(0, 0, 100, 90);
+    fill(46, 10, 100, 92);
     circle(length * 0.43, -eyeY, eyeSize);
     circle(length * 0.43, eyeY, eyeSize);
+    fill(205, 28, 12, 78);
+    circle(length * 0.45, -eyeY, eyeSize * 0.38);
+    circle(length * 0.45, eyeY, eyeSize * 0.38);
     pop();
   }
 
@@ -385,6 +507,29 @@ function mutateGenes(genes) {
     efficiency: constrain(genes.efficiency + randomGaussian(0, 0.12 * rate), 0.48, 1.55),
     turn: constrain(genes.turn + randomGaussian(0, 0.03 * rate), 0.02, 0.18)
   };
+}
+
+function flowAt(x, y) {
+  const n = noise(x * 0.0038, y * 0.0038, driftSeed + frameCount * 0.0014);
+  return p5.Vector.fromAngle(n * TWO_PI * 2.15);
+}
+
+function drawTrailShape(points) {
+  let drawing = false;
+  let previous = null;
+
+  for (const point of points) {
+    const wrappedJump = previous && dist(previous.x, previous.y, point.x, point.y) > min(width, height) * 0.34;
+    if (!drawing || wrappedJump) {
+      if (drawing) endShape();
+      beginShape();
+      drawing = true;
+    }
+    curveVertex(point.x, point.y);
+    previous = point;
+  }
+
+  if (drawing) endShape();
 }
 
 function torusDistance(a, b) {

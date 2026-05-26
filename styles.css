@@ -1,14 +1,15 @@
 :root {
   color-scheme: dark;
-  --bg: #101314;
-  --panel: #181d1c;
-  --panel-2: #202725;
-  --text: #edf2ea;
-  --muted: #aab5aa;
-  --line: #34403b;
-  --accent: #e6c65c;
-  --green: #75d17a;
-  --coral: #f07167;
+  --bg: #0d1011;
+  --panel: #151818;
+  --panel-2: #1d2221;
+  --text: #f2efe5;
+  --muted: #aaa99d;
+  --line: #343832;
+  --accent: #d8b45d;
+  --green: #8ecf91;
+  --coral: #d66d5f;
+  --blue: #7caad6;
 }
 
 * {
@@ -22,7 +23,7 @@ body {
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: #0d1011;
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -54,11 +55,14 @@ input {
 
 .panel {
   border-left: 1px solid var(--line);
-  background: var(--panel);
-  padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(242, 239, 229, 0.035), rgba(13, 16, 17, 0)),
+    var(--panel);
+  padding: 26px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  box-shadow: -18px 0 60px rgba(0, 0, 0, 0.18);
 }
 
 .brand {
@@ -77,8 +81,9 @@ input {
 
 h1 {
   margin: 0;
-  font-size: 32px;
+  font-size: 34px;
   line-height: 1.05;
+  font-weight: 760;
 }
 
 .stats {
@@ -89,7 +94,7 @@ h1 {
 
 .stats div {
   border: 1px solid var(--line);
-  background: var(--panel-2);
+  background: linear-gradient(180deg, rgba(242, 239, 229, 0.04), rgba(242, 239, 229, 0.01)), var(--panel-2);
   border-radius: 8px;
   padding: 12px;
   min-height: 74px;
@@ -124,6 +129,12 @@ input[type="range"] {
   accent-color: var(--accent);
 }
 
+input[type="range"]:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgba(216, 180, 93, 0.78);
+  outline-offset: 3px;
+}
+
 .actions {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -134,13 +145,13 @@ button {
   border: 1px solid var(--line);
   border-radius: 8px;
   min-height: 42px;
-  background: #252d2a;
+  background: linear-gradient(180deg, #2a302e, #202522);
   color: var(--text);
   cursor: pointer;
 }
 
 button:hover {
-  background: #2e3935;
+  background: linear-gradient(180deg, #343c38, #252b28);
 }
 
 .legend {
@@ -169,7 +180,7 @@ button:hover {
 }
 
 .swatch.fast {
-  background: #66b7ff;
+  background: var(--blue);
 }
 
 .swatch.efficient {
