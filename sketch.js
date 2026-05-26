@@ -11,7 +11,7 @@ const MAX_CREATURES = 260;
 const MAX_FOOD = 620;
 const START_CREATURES = 42;
 const START_FOOD = 210;
-const LINEAGE_HUES = [18, 42, 178, 205, 287, 326];
+const LINEAGE_HUES = [2, 9, 194, 205, 126, 146];
 
 function setup() {
   sketchHost = document.getElementById("sketch");
@@ -135,13 +135,13 @@ function growFood() {
 }
 
 function drawBackdrop() {
-  background(205, 18, 7);
+  background(42, 10, 98);
 
   noStroke();
-  for (let y = 0; y < height; y += 3) {
-    const shade = map(y, 0, height, 9, 4);
-    fill(185 + noise(y * 0.004, frameCount * 0.001) * 30, 16, shade, 48);
-    rect(0, y, width, 3);
+  for (let y = 0; y < height; y += 4) {
+    const shade = map(y, 0, height, 100, 94);
+    fill(42 + noise(y * 0.004, frameCount * 0.001) * 12, 7, shade, 36);
+    rect(0, y, width, 4);
   }
 }
 
@@ -156,7 +156,7 @@ function drawFlowField() {
       const n = noise(x * 0.003, y * 0.003, driftSeed + frameCount * 0.001);
       const angle = n * TWO_PI * 2.2;
       const len = 28 + n * 42;
-      stroke(42, 30, 72, 4.5);
+      stroke(205, 18, 58, 3.2);
       beginShape();
       for (let i = 0; i < 5; i++) {
         const t = i / 4;
@@ -177,7 +177,7 @@ function drawFoodGlow() {
   blendMode(ADD);
   noStroke();
   for (const pellet of food) {
-    fill(106, 46, 40, 4.2);
+    fill(112, 38, 76, 5.2);
     circle(pellet.pos.x, pellet.pos.y, pellet.energy * 6.5);
   }
   blendMode(BLEND);
@@ -186,9 +186,9 @@ function drawFoodGlow() {
 function drawFood() {
   noStroke();
   for (const pellet of food) {
-    fill(104, 44, 86, 78);
+    fill(112, 42, 66, 76);
     circle(pellet.pos.x, pellet.pos.y, pellet.energy * 1.15);
-    fill(52, 38, 98, 42);
+    fill(52, 30, 98, 48);
     circle(pellet.pos.x - pellet.energy * 0.14, pellet.pos.y - pellet.energy * 0.16, pellet.energy * 0.34);
   }
 }
@@ -232,9 +232,9 @@ function drawTrails() {
 
 function drawVignette() {
   noFill();
-  strokeWeight(24);
-  for (let i = 0; i < 5; i++) {
-    stroke(205, 18, 2, 8);
+  strokeWeight(18);
+  for (let i = 0; i < 4; i++) {
+    stroke(36, 18, 72, 3.5);
     rect(i * 10, i * 10, width - i * 20, height - i * 20);
   }
 }
@@ -277,7 +277,7 @@ class Creature {
       eyeGap: random(0.22, 0.72),
       sensorWidth: random(0.09, 0.36),
       markings: random(0.1, 1),
-      hue: random(LINEAGE_HUES) + random(-12, 12),
+      hue: random(LINEAGE_HUES) + random(-8, 8),
       efficiency: random(0.72, 1.2),
       turn: random(0.035, 0.13)
     };
@@ -384,11 +384,11 @@ class Creature {
     if (this.trail.length < 3) return;
 
     const bodyHue = wrapValue(this.genes.hue, 360);
-    stroke(bodyHue, 48, 76, 3 + this.genes.markings * 7);
+    stroke(bodyHue, 34, 76, 4 + this.genes.markings * 7);
     strokeWeight(max(1, this.bodyWidth() * 0.18));
     drawTrailShape(this.trail);
 
-    stroke(wrapValue(bodyHue + 34, 360), 34, 94, 3.5);
+    stroke(wrapValue(bodyHue + 24, 360), 28, 88, 3.8);
     strokeWeight(max(0.5, this.bodyWidth() * 0.055));
     drawTrailShape(this.trail);
   }
@@ -408,10 +408,10 @@ class Creature {
     translate(this.pos.x, this.pos.y);
     rotate(angle);
     noStroke();
-    fill(bodyHue, 46, 92, 8);
+    fill(bodyHue, 34, 82, 8);
     arc(0, 0, this.genes.sense * 0.7, this.genes.sense * this.genes.sensorWidth, -0.62, 0.62);
 
-    stroke(bodyHue, 42, 88, 18);
+    stroke(bodyHue, 34, 72, 20);
     strokeWeight(max(0.8, bodyWidth * 0.045));
     noFill();
     bezier(
@@ -436,30 +436,30 @@ class Creature {
     );
     noStroke();
 
-    fill(bodyHue, 70, 62, energyAlpha * 0.58);
+    fill(bodyHue, 48, 72, energyAlpha * 0.48);
     beginShape();
     vertex(-length * 0.45, 0);
     bezierVertex(-length * 0.56, -bodyWidth * 0.52, -length * 0.5 - tailLength, -bodyWidth * 0.36, -length * 0.54 - tailLength, 0);
     bezierVertex(-length * 0.5 - tailLength, bodyWidth * 0.36, -length * 0.56, bodyWidth * 0.52, -length * 0.45, 0);
     endShape(CLOSE);
 
-    fill(bodyHue, 74, 96, energyAlpha);
+    fill(bodyHue, 48, 88, energyAlpha);
     beginShape();
     vertex(-length * 0.5, 0);
     bezierVertex(-length * 0.38, -bodyWidth * 0.72, length * 0.04, -bodyWidth * 0.7, length * 0.45, -bodyWidth * 0.08);
     bezierVertex(length * 0.58, bodyWidth * 0.08, length * 0.06, bodyWidth * 0.72, -length * 0.5, 0);
     endShape(CLOSE);
 
-    fill(wrapValue(bodyHue + 22, 360), 56, 100, energyAlpha * 0.88);
+    fill(wrapValue(bodyHue + 16, 360), 42, 96, energyAlpha * 0.88);
     ellipse(length * 0.38, 0, headSize, bodyWidth * 0.9);
 
     if (this.genes.markings > 0.28) {
-      fill(wrapValue(bodyHue + 142, 360), 38, 98, 22 + this.genes.markings * 26);
+      fill(wrapValue(bodyHue + 154, 360), 30, 94, 22 + this.genes.markings * 24);
       ellipse(-length * 0.18, 0, length * (0.11 + this.genes.markings * 0.08), bodyWidth * 0.62);
     }
 
     if (this.genes.markings > 0.62) {
-      stroke(wrapValue(bodyHue + 214, 360), 34, 100, 38);
+      stroke(wrapValue(bodyHue + 198, 360), 28, 82, 36);
       strokeWeight(max(1, bodyWidth * 0.055));
       noFill();
       bezier(-length * 0.42, -bodyWidth * 0.1, -length * 0.1, -bodyWidth * 0.36, length * 0.12, -bodyWidth * 0.18, length * 0.28, -bodyWidth * 0.28);
@@ -467,10 +467,10 @@ class Creature {
       noStroke();
     }
 
-    fill(46, 10, 100, 92);
+    fill(36, 10, 100, 92);
     circle(length * 0.43, -eyeY, eyeSize);
     circle(length * 0.43, eyeY, eyeSize);
-    fill(205, 28, 12, 78);
+    fill(210, 18, 24, 72);
     circle(length * 0.45, -eyeY, eyeSize * 0.38);
     circle(length * 0.45, eyeY, eyeSize * 0.38);
     pop();
