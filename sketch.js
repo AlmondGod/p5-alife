@@ -177,7 +177,8 @@ function drawFoodGlow() {
   blendMode(ADD);
   noStroke();
   for (const pellet of food) {
-    fill(112, 38, 76, 5.2);
+    const hue = pellet.hue;
+    fill(hue, 24, 86, 4.8);
     circle(pellet.pos.x, pellet.pos.y, pellet.energy * 6.5);
   }
   blendMode(BLEND);
@@ -186,9 +187,9 @@ function drawFoodGlow() {
 function drawFood() {
   noStroke();
   for (const pellet of food) {
-    fill(112, 42, 66, 76);
+    fill(pellet.hue, 28, 76, 70);
     circle(pellet.pos.x, pellet.pos.y, pellet.energy * 1.15);
-    fill(52, 30, 98, 48);
+    fill(wrapValue(pellet.hue + 22, 360), 16, 98, 46);
     circle(pellet.pos.x - pellet.energy * 0.14, pellet.pos.y - pellet.energy * 0.16, pellet.energy * 0.34);
   }
 }
@@ -254,6 +255,7 @@ class Food {
   constructor(x, y) {
     this.pos = createVector(wrapValue(x, width), wrapValue(y, height));
     this.energy = random(5, 10);
+    this.hue = random() < 0.55 ? random(198, 212) : random() < 0.5 ? random(0, 8) : random(352, 360);
   }
 }
 
