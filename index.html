@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ALife Pond</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  </head>
+  <body>
+    <main class="app">
+      <section class="simulation" aria-label="Artificial life simulation">
+        <div id="sketch"></div>
+      </section>
+
+      <aside class="panel" aria-label="Simulation controls">
+        <div class="brand">
+          <p class="eyebrow">p5.js ALife</p>
+          <h1>ALife Pond</h1>
+        </div>
+
+        <div class="stats">
+          <div>
+            <span class="label">Population</span>
+            <strong id="population">0</strong>
+          </div>
+          <div>
+            <span class="label">Food</span>
+            <strong id="food-count">0</strong>
+          </div>
+          <div>
+            <span class="label">Generation</span>
+            <strong id="generation">0</strong>
+          </div>
+          <div>
+            <span class="label">Avg length</span>
+            <strong id="avg-length">0.00</strong>
+          </div>
+        </div>
+
+        <div class="control-grid">
+          <label>
+            <span>Food growth</span>
+            <input id="food-growth" type="range" min="1" max="20" value="7">
+          </label>
+          <label>
+            <span>Mutation</span>
+            <input id="mutation" type="range" min="1" max="30" value="9">
+          </label>
+          <label>
+            <span>Metabolism</span>
+            <input id="metabolism" type="range" min="1" max="20" value="8">
+          </label>
+          <label>
+            <span>Speed</span>
+            <input id="sim-speed" type="range" min="1" max="6" value="2">
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="toggle" type="button">Pause</button>
+          <button id="seed" type="button">Add life</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+
+        <div class="legend" aria-label="Trait legend">
+          <div><span class="swatch food"></span>Food</div>
+          <div><span class="swatch fast"></span>Fast lineages</div>
+          <div><span class="swatch efficient"></span>Long-bodied lineages</div>
+        </div>
+      </aside>
+    </main>
+
+    <script src="sketch.js"></script>
+  </body>
+</html>
